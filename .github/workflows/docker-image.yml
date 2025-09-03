@@ -1,0 +1,37 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+  
+      - name: Get latest release tag from liuch/dmarc-srg
+        id: get_tag
+        run: |
+          latest_tag=$(curl -s https://api.github.com/repos/liuch/dmarc-srg/releases/latest | jq -r .tag_name)
+          echo "Latest tag: $latest_tag"
+          echo "DMARC_SRG_VERSION=$latest_tag" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker buildx create --use
+          docker buildx inspect --bootstrap
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --tag ghcr.io/h3po/dmarc-srg:latest \
+            --tag ghcr.io/h3po/dmarc-srg:${{ env.DMARC_SRG_VERSION }} \
+            --build-arg DMARC_SRG_VERSION=${{ env.DMARC_SRG_VERSION }} \
+            --push .
