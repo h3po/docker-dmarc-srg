@@ -10,7 +10,8 @@ RUN \
     apt-get update && \
     apt-get install -y \
         curl \
-        libzip-dev
+        libzip-dev \
+        unzip
 
 RUN docker-php-ext-install pdo pdo_mysql zip
 
@@ -25,4 +26,4 @@ RUN \
     sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf \
     && sed -i 's|<Directory /var/www/>|<Directory /var/www/html/public>|' /etc/apache2/apache2.conf \
     && sed -i 's|<Directory /var/www/>|<Directory /var/www/html/public>|' /etc/apache2/conf-enabled/docker-php.conf \
-    && rm -rf /tmp/* /var/cache/* /var/lib/apt/lists/*
+    && rm -rf /var/cache/* /var/lib/apt/lists/*
