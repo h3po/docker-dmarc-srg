@@ -13,6 +13,7 @@ RUN \
         libzip-dev \
         unzip
 
+RUN docker-php-ext-configure imap --with-imap-ssl
 RUN docker-php-ext-install pdo pdo_mysql zip
 
 RUN \
