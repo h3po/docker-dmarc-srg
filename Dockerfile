@@ -17,7 +17,8 @@ RUN \
 RUN \
     pecl channel-update pecl.php.net \
     && pecl install --onlyreqdeps --configureoptions 'with-imap-ssl="yes" with-kerberos="yes"' pecl/imap \
-    && docker-php-ext-install pdo pdo_mysql zip
+    && docker-php-ext-install pdo pdo_mysql zip \
+    && docker-php-ext-enable imap
 
 RUN \
     tar xzf ${DMARC_SRG_VERSION}.tar.gz --strip-components 1 \
