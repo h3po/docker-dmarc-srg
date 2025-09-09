@@ -1,4 +1,4 @@
-FROM php:apache
+FROM php:apache-bookworm
 
 ARG DMARC_SRG_VERSION=v2.3
 ENV DEBIAN_FRONTEND=noninteractive
@@ -9,18 +9,21 @@ ADD https://github.com/liuch/dmarc-srg/archive/refs/tags/${DMARC_SRG_VERSION}.ta
 RUN \
     apt-get update && \
     apt-get install -y \
-        curl \
         libzip-dev \
-        unzip
+        unzip \
+        libc-client-dev \
+        libkrb5-dev
 
-RUN docker-php-ext-install pdo pdo_mysql zip
+RUN \
+    pecl channel-update pecl.php.net \
+    && pecl install --onlyreqdeps --configureoptions 'with-imap-ssl="yes" with-kerberos="yes"' pecl/imap \
+    && docker-php-ext-install pdo pdo_mysql zip
 
 RUN \
     tar xzf ${DMARC_SRG_VERSION}.tar.gz --strip-components 1 \
     && rm ${DMARC_SRG_VERSION}.tar.gz \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && ls -al . \
-    && composer install --no-dev --optimize-autoloader
+    && /usr/local/bin/composer install --no-dev --optimize-autoloader
 
 RUN \
     sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|' /etc/apache2/sites-available/000-default.conf \
