@@ -56,6 +56,19 @@ COPY --from=php-ext /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 WORKDIR /var/www/html
 ADD https://github.com/liuch/dmarc-srg/archive/refs/tags/${DMARC_SRG_VERSION}.tar.gz /var/www/html/src.tar.gz
 RUN tar xzf src.tar.gz --strip-components=1 && rm src.tar.gz
+
+# Downstream hotfixes (see the preambles inside patches/). Fail the build if
+# one no longer applies: that means upstream has absorbed the fix (move to a
+# newer release) or moved the code and the patch needs review.
+COPY patches/ /tmp/patches/
+RUN set -eu; \
+    cd /var/www/html; \
+    for p in /tmp/patches/*.patch; do \
+        echo "applying $(basename "$p")"; \
+        patch -p1 --no-backup-if-mismatch -i "$p"; \
+    done; \
+    rm -rf /tmp/patches; \
+    php -l classes/Report/ReportData.php > /dev/null
 COPY --from=vendor /app/vendor /var/www/html/vendor
 
 # Serve public/ only; the stock <Directory /var/www/> block covers access.
