@@ -57,3 +57,29 @@ To regularly fetch dmarc reports from an imap mailbox, create a cronjob or syste
 ```bash
 docker exec -t dmarc-srg php utils/fetch_reports.php
 ```
+
+## Upgrading
+
+After updating an existing deployment across 2.x -> 3.0, run the database
+upgrade once:
+
+```bash
+docker exec dmarc-srg php /var/www/html/utils/database_admin.php upgrade
+```
+
+The image ships the PHP imap extension (built via [PIE](https://github.com/php/pie)
+from the PECL-maintained `sirlouen/imap` fork, since upstream PHP >= 8.4 no longer
+bundles the build files); this is what dmarc-srg v2.3 uses for mailbox fetching.
+
+## Mailer
+
+The image has no sendmail, so `$mailer` must use SMTP or reports are silently
+never sent:
+
+```php
+$mailer = [
+    'library' => 'phpmailer',
+    'method'  => 'smtp',
+    // ...
+];
+```
